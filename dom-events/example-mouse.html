@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        html {
+            margin: 0;
+            display: block;
+            width: 100%;
+            height: 100%;
+            background-color: white;
+            /*width: 50vw;*/
+        }
+        body {
+            display: flex;
+            flex-direction: row;
+        }
+        div#container {
+            display: block;
+            flex: 1
+        }
+        div#control {
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+        }
+        #log {
+            display: block;
+            flex: 1;
+        }
+        #options {
+            display: flex;
+            flex-direction: column;
+        }
+        #listeners {
+            display: flex;
+            flex-direction: column;
+        }
+        dl.inline {
+            width: 100%;
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+        dl.inline dd {
+            width: 50%;
+            margin: 0;
+            text-align: right;
+        }
+        dl.inline dt{
+            width: 50%;
+        }
+    </style>
+</head>
+<body id="body">
+<div id="container">
+    <table width="100%" cellspacing="0" border="1">
+        <tr>
+            <th>Браузер</th>
+            <th colspan="3">Internet Explorer</th>
+            <th colspan="3">Opera</th>
+            <th colspan="2">Firefox</th>
+        </tr>
+        <tr>
+            <th>Версия</th>
+            <td>5.5</td>
+            <td>6.0</td>
+            <td>7.0</td>
+            <td>7.0</td>
+            <td>8.0</td>
+            <td>9.0</td>
+            <td>1.0</td>
+            <td>2.0</td>
+        </tr>
+        <tr>
+            <th>Поддерживается</th>
+            <td>Да</td>
+            <td>Да</td>
+            <td>Да</td>
+            <td>Да</td>
+            <td>Да</td>
+            <td>Да</td>
+            <td>Да</td>
+            <td>Да</td>
+        </tr>
+    </table>
+</div>
+<div id="control">
+    <button id="cleanup">Cleanup</button>
+    <button id="setup">Setup</button>
+    <form id="options">
+        <dl class="inline">
+            <dt>Event: </dt>
+            <dd><select id="eventOptions"></select></dd>
+            <dt>once: </dt>
+            <dd><input type="checkbox" name="once" id="once" default=""></dd>
+            <dt>useCapture: </dt>
+            <dd><input type="checkbox" name="useCapture" id="useCapture" default=""></dd>
+            <dt>stopPropagation:</dt>
+            <dd><input type="checkbox" id="stopPropagation" default=""></dd>
+            <dt>stopImmediatePropagation: </dt>
+            <dd><input type="checkbox" id="stopImmediatePropagation" default=""></dd>
+            <dt>preventDefault: </dt>
+            <dd><input type="checkbox" id="preventDefault" default=""></dd>
+        </dl>
+    </form>
+    <div id="listeners"></div>
+</div>
+<ol id="log"></ol>
+<script>
+    (function () {
+        var cleanupButton = document.getElementById('cleanup');
+        var setupButton = document.getElementById('setup');
+        var log = document.getElementById('log');
+        var control = document.getElementById('control');
+        var container = document.getElementById('container');
+        var eventOptions = document.getElementById('eventOptions');
+        var listenersDiv = document.getElementById('listeners');
+        var listeners = [];
+        var phases = ['NONE', 'CAPTURING_PHASE', 'AT_TARGET', 'BUBBLING_PHASE'];
+
+        ["mousedown", "mouseup", "click", "mousemove", "mouseenter", "mouseleave", "mouseout", "mouseover"].forEach(function (option) {
+            var optionElement = document.createElement('option');
+            optionElement.value = option;
+            optionElement.text = option;
+            eventOptions.appendChild(optionElement);
+        });
+
+        function getXPathForElement(element) {
+            const idx = (sib, name) => sib
+                ? idx(sib.previousElementSibling, name||sib.localName) + (sib.localName == name)
+                : 1;
+            const segs = elm => !elm || elm.nodeType !== 1
+                ? ['']
+                : elm.id && document.getElementById(elm.id) === elm
+                    ? [`id("${elm.id}")`]
+                    : [...segs(elm.parentNode), `${elm.localName.toLowerCase()}[${idx(elm)}]`];
+            return segs(element).join('/');
+        }
+
+        cleanupButton.addEventListener('click', function (event) {
+            for (let i = log.childNodes.length - 1; i >= 0; --i) {
+                log.removeChild(log.childNodes[i]);
+            }
+            for (let i = listenersDiv.childNodes.length - 1; i >= 0; --i) {
+                listenersDiv.removeChild(listenersDiv.childNodes[i]);
+            }
+            listeners.forEach(function (listener) {
+                var node = listener.node;
+                var func = listener.func;
+                var options = listener.options;
+                var event = listener.event;
+                node.removeEventListener(event, func, options);
+            });
+            listeners.splice(0);
+        });
+
+        setupButton.addEventListener('click', function (event) {
+            var event = eventOptions.value;
+            var capture = !!document.getElementById('useCapture').checked;
+            var once = !!document.getElementById('once').checked;
+            var stopPropagation = !!document.getElementById('stopPropagation').checked;
+            var stopImmediatePropagation = !!document.getElementById('stopImmediatePropagation').checked;
+            var preventDefault = !!document.getElementById('preventDefault').checked;
+            setup(container, event, {
+                stopPropagation, stopImmediatePropagation, preventDefault,
+            }, { capture, once });
+            var listenerDiv = document.createElement('div');
+            listenerDiv.innerHTML = `
+                    <dl class="inline">
+            <dt>Event: </dt>
+            <dd>${event}</dd>
+            <dt>once: </dt>
+            <dd><input type="checkbox" disabled="disabled" checked="${once ? 'checked' : ''}"></dd>
+            <dt>useCapture: </dt>
+            <dd><input type="checkbox" disabled="disabled" checked="${capture ? 'checked' : ''}"></dd>
+            <dt>stopPropagation:</dt>
+            <dd><input type="checkbox" disabled="disabled" checked="${stopPropagation ? 'checked' : ''}"></dd>
+            <dt>stopImmediatePropagation: </dt>
+            <dd><input type="checkbox" disabled="disabled" checked="${stopImmediatePropagation ? 'checked' : ''}"></dd>
+            <dt>preventDefault: </dt>
+            <dd><input type="checkbox" disabled="disabled" checked="${preventDefault ? 'checked' : ''}"></dd>
+            </dl>
+            `;
+            listenersDiv.appendChild(listenerDiv);
+        });
+
+        function onEventFired(event, level, params) {
+            if (params.preventDefault) {
+                try {
+                    event.preventDefault();
+                } catch (e) {
+                    console.warn(e);
+                }
+            }
+            if (params.stopPropagation) {
+                try {
+                    event.stopPropagation();
+                } catch (e) {
+                    console.warn(e);
+                }
+            }
+            if (params.stopImmediatePropagation) {
+                try {
+                    event.stopImmediatePropagation();
+                } catch (e) {
+                    console.warn(e);
+                }
+            }
+            var text = document.createElement('li');
+            var currentTarget = event.currentTarget;
+            var targetText = currentTarget ? `${currentTarget.tagName}${currentTarget.id ? '#' + currentTarget.id : ''}${currentTarget.className ? '.' + currentTarget.className.split(' ').join('.') : ''}` : 'NULL';
+            var path = currentTarget ? getXPathForElement(currentTarget) : 'NULL'
+            text.innerText = `Found event ${event.type} at phase ${phases[event.eventPhase]} ON ${targetText}`;
+            if (path) {
+                text.setAttribute('title', path);
+            }
+            log.appendChild(text);
+        }
+
+        function setup(root, event, params, options, level=0) {
+            var func = function (event) {
+                return onEventFired(event, level, params);
+            };
+            root.addEventListener(event, func, options);
+            listeners.push({
+                node: root,
+                event,
+                params,
+                options,
+                level,
+                func,
+            });
+            root.childNodes.forEach(function (node) {
+                setup(node, event, params, options, level + 1);
+            });
+        }
+    })();
+
+</script>
+</body>
+</html>

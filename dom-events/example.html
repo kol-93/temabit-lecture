@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <a href="https://google.com" id="test">Click Me!</a>
+    <script>
+        function f1(event) {
+            alert('Function 1');
+        }
+        function f2(event) {
+            alert('Function 2');
+            event.preventDefault();
+        }
+
+        function beforeBind(x, y) {
+            document.getElementById('test').innerText = ('' + x) + y;
+        }
+
+        function setRandomText(element, maxNumber) {
+            element.innerText = Math.floor(Math.random() * maxNumber);
+        }
+
+        function bind(sourceFunction, thisArg) {
+            var args = Array.prototype.slice.call(arguments, 2);
+            return function () {
+                var newArgs = Array.prototype.slice.call(arguments);
+                var allArgs = [];
+                for (let i = 0; i !== args.length; ++i) {
+                    allArgs.push(args[i]);
+                }
+                for (let i = 0; i !== newArgs.length; ++i) {
+                    allArgs.push(newArgs[i]);
+                }
+                return sourceFunction.apply(thisArg, allArgs);
+            };
+        }
+
+        class Test {
+            constructor(value) {
+                this.f = (a, b) => {
+                    console.log(arguments);
+                    return (this.value) * (a + b);
+                };
+                this.g = (function (_args, a, b) {
+                    console.log(arguments);
+                    return (this.value) * (a + b);
+                }).bind(this, arguments);
+                this.value = value;
+            }
+
+            alert(x) {
+                alert(this.value + ' ' + x);
+            }
+        }
+
+        var instance = new Test(10);
+
+        // alert(instance.g(20, 30));
+        // alert(instance.f(20, 30));
+        console.log('instance.alert(10)', instance.alert(10));
+        var a = instance.alert;
+        try {
+            console.log('var a = instance.alert; a(10)', a(10));
+        } catch (e) {
+            console.warn(e);
+        }
+
+        try {
+            console.log('var a = instance.alert; a.call({}, 10)', a.call({ value: 42 }, 10));
+        } catch (e) {
+            console.warn(e);
+        }
+
+        // function showElementTag(level, element) {
+        //     alert(level + ' ' + element.tagName);
+        //     element.childNodes.forEach(showElementTag.bind(this, level + 1));
+        // }
+        //
+        // showElementTag(0, document);
+
+        // document
+
+        //
+        // var afterBind = beforeBind.bind(null, 10, 20);
+        // afterBind();
+        // alert(afterBind === beforeBind);
+
+        // var allfunctions = [
+        //     f1, f2
+        // ];
+
+        // document.getElementById('test').onclick = function (event) {
+        //     allfunctions.forEach(function (f) {
+        //         f(event);
+        //     });
+        // };
+
+        window.addEventListener('mousedown', function (event) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+        }, true);
+        window.addEventListener('mousedown', function (event) {
+            alert('Hello');
+        }, true);
+
+        var test = document.getElementById('test');
+        test.addEventListener('click', f1, {
+            capture: true,
+            once: true,
+        });
+        test.addEventListener('click', f2, {
+            capture: true,
+            passive: true,
+        });
+
+    </script>
+</body>
+</html>
