@@ -1,15 +1,11 @@
 function logAndEval(code) { console.log('%s ===> %o', code, eval(code)); }
 
-Function.someStaticFunction = function () {
-	return 'bla bla bla';
-};
-
 var Base = (function (BaseClass) {
 	function Class() {
-		BaseClass.apply(this, arguments);
 		if (!(this instanceof Class)) {
 			throw new TypeError('Base() must be called with new operator');
 		}
+		BaseClass.apply(this, arguments);
 	}
 
 	Class.someStaticMethod = function someStaticMethod() {
@@ -17,13 +13,8 @@ var Base = (function (BaseClass) {
 	};
 
 	Class.staticField = 42;
-	if (BaseClass !== Object) {
-		Object.setPrototypeOf(Class, BaseClass);
-		Class.prototype = Object.create(BaseClass.prototype);
-	} else {
-		Object.setPrototypeOf(Class, Function);
-		Class.prototype = Object.create(Function.prototype);
-	}
+	Object.setPrototypeOf(Class, BaseClass);
+	Class.prototype = Object.create(BaseClass.prototype);
 
 	Class.prototype.someMethod = function someMethod() {
 		return this.fieldA + ' ' + this.fieldB;
@@ -64,11 +55,10 @@ const C = Object.create(Derived.prototype);
 Derived.call(C);
 
 
-logAndEval('Object.getOwnPropertyDescriptors(Base)');
-logAndEval('Object.getOwnPropertyDescriptors(Base.prototype)');
+// logAndEval('Object.getOwnPropertyDescriptors(Base)');
+// logAndEval('Object.getOwnPropertyDescriptors(Base.prototype)');
 logAndEval('Object.getPrototypeOf(Base) === Object');
 logAndEval('Object.getPrototypeOf(Base.prototype) === Object.prototype');
-logAndEval('Base.someStaticFunction()');
 logAndEval('Derived.someStaticMethod()');
 logAndEval('A.someMethod()');
 logAndEval('B.someMethod()');

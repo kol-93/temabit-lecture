@@ -6,10 +6,21 @@ class Base {
 	}
 
 	constructor() {
+		this.X = 10;
 	}
 
 	someMethod() {
-		return  this.fieldA + ' ' + this.fieldB;
+		return this.fieldA + ' ' + this.fieldB;
+	}
+
+	get fieldC() {
+		return this.fieldA + '+' + this.fieldB;
+	}
+
+	set fieldC(value) {
+		var values = ('' + value).split('+');
+		this.fieldA = values[0];
+		this.fieldB = values[1];
 	}
 }
 Base.staticField = 42;
@@ -37,12 +48,32 @@ class Derived extends Base {
 	someMethod3() {
 		return 'Some method 3: ' + super.fieldA;
 	}
+
+	someMethod4() {
+		return this.constructor.someStaticMethod();
+	}
+
+	someMethod5() {
+		return Derived.someStaticMethod();
+	}
 }
 
+class MoreDerived extends Derived {
+	static someStaticMethod() {
+		return 'More Derived static: ' + super.someStaticMethod();
+	}
+}
+
+Derived.prototype.fieldA = 'Prototype of Derived';
+
 const A = new Base();
+logAndEval('A.fieldC');
+logAndEval('A.fieldC = "A + B"');
+logAndEval('A.fieldA');
+logAndEval('A.fieldB');
+
 const B = new Derived();
-const C = Object.create(Derived.prototype);
-Derived.call(C);
+
 B.fieldA = 'This is B: ';
 logAndEval('Derived.someStaticMethod()');
 logAndEval('A.someMethod()');
@@ -55,3 +86,7 @@ logAndEval('A instanceof Derived');
 logAndEval('B instanceof Object');
 logAndEval('B instanceof Base');
 logAndEval('B instanceof Derived');
+
+const C = new MoreDerived();
+logAndEval('C.someMethod4()');
+logAndEval('C.someMethod5()');
