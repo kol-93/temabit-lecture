@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Title</title>
+</head>
+<body>
+<canvas style="margin: 0; padding: 0" width="400" height="400" id="canvas"></canvas>
+<script>
+	const canvas = document.getElementById('canvas');
+	const context = canvas.getContext('2d');
+	function drawPath(offsetX, offsetY, fillStyle, strokeStyle) {
+		context.beginPath();
+		context.moveTo(100 + offsetX, 100 + offsetY);
+		context.lineTo(200 + offsetX, 200 + offsetY);
+		context.arc(100 + offsetX, 50 + offsetY, 50, 0, 2*Math.PI);
+		context.lineTo(100 + offsetX, 50 + offsetY);
+		// context.closePath();
+		context.lineCap = "round";
+		context.lineJoin = "round";
+		context.fillStyle = fillStyle;
+		context.strokeStyle = strokeStyle;
+		context.lineWidth = 10;
+	}
+
+	const shapes = [
+		() => {
+			drawPath(0, 0, 'blue', 'red');
+		},
+		() => {
+			drawPath(100, 100, 'black', 'green');
+		},
+		() => {
+			drawPath(-100, -100, 'green', 'black');
+		}
+	];
+
+	let selected = {
+		index: null,
+		fill: false,
+		stroke: false,
+	};
+
+	function draw(stroke, fill) {
+		if (stroke) {
+			context.stroke();
+		}
+		if (fill) {
+			context.fill();
+		}
+	}
+
+	canvas.addEventListener('mousemove', (event) => {
+		const x = event.offsetX;
+		const y = event.offsetY;
+		selected = {
+			index: null,
+			fill: false,
+			stroke: false,
+		};
+		for (let i = 0; i !== shapes.length; ++i) {
+			const shape = shapes[i];
+			shape();
+			if (context.isPointInStroke(x, y)) {
+				selected = {
+					index: i,
+					fill: false,
+					stroke: true,
+				};
+			} else if (context.isPointInPath(x, y)) {
+				selected = {
+					index: i,
+					fill: true,
+					stroke: false,
+				};
+			}
+		}
+	});
+
+	setInterval(() => {
+		context.clearRect(0, 0, canvas.width, canvas.height);
+		for (let i = 0; i !== shapes.length; ++i) {
+			const shape = shapes[i];
+			shape();
+			if (selected.index === i && selected.stroke) {
+				context.shadowColor = '#111111cc';
+				context.shadowOffsetX = 0;
+				context.shadowOffsetY = 0;
+				context.shadowBlur = 10;
+			} else if (selected.index === i && selected.fill) {
+				context.shadowColor = '#ff0000cc';
+				context.shadowOffsetX = 0;
+				context.shadowOffsetY = 0;
+				context.shadowBlur = 5;
+			} else {
+				context.shadowColor = 'transparent';
+				context.shadowOffsetX = 0;
+				context.shadowOffsetY = 0;
+				context.shadowBlur = 0;
+			}
+			draw(true, true);
+		}
+	}, 16);
+
+	// setTimeout(() => {
+	// 	drawPath();
+	// 	context.fillStyle = '#11111177';
+	// 	context.strokeStyle = '#11111177';
+	// 	draw(true, true);
+	// }, 1);
+
+</script>
+</body>
+</html>

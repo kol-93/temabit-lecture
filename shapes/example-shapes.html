@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Title</title>
+</head>
+<body>
+<canvas style="margin: 0; padding: 0" width="400" height="400" id="canvas"></canvas>
+<script src="./shapes.js"></script>
+<script>
+	const canvas = document.getElementById('canvas');
+	const context = canvas.getContext('2d');
+	function drawPath(offsetX, offsetY, fillStyle, strokeStyle) {
+		context.beginPath();
+		context.moveTo(100 + offsetX, 100 + offsetY);
+		context.lineTo(200 + offsetX, 200 + offsetY);
+		context.arc(100 + offsetX, 50 + offsetY, 50, 0, 2*Math.PI);
+		context.lineTo(100 + offsetX, 50 + offsetY);
+		// context.closePath();
+		context.lineCap = "round";
+		context.lineJoin = "round";
+		context.fillStyle = fillStyle;
+		context.strokeStyle = strokeStyle;
+		context.lineWidth = 10;
+	}
+
+
+	const shapes = [
+		new Shape1(),
+		new Shape1(),
+	];
+	shapes[1].scale(2, -200, 0);
+
+
+	function draw(stroke, fill) {
+		if (stroke) {
+			context.stroke();
+		}
+		if (fill) {
+			context.fill();
+		}
+	}
+
+	canvas.addEventListener('mousemove', (event) => {
+		const x = event.offsetX;
+		const y = event.offsetY;
+		const deltaX = event.movementX;
+		const deltaY = event.movementY;
+		for (let i = 0; i !== shapes.length; ++i) {
+			shapes[i].move(deltaX, deltaY);
+		}
+	});
+
+	setInterval(() => {
+		context.clearRect(0, 0, canvas.width, canvas.height);
+		for (let i = 0; i !== shapes.length; ++i) {
+			const shape = shapes[i];
+			shape.draw(context);
+		}
+	}, 16);
+
+	// setTimeout(() => {
+	// 	drawPath();
+	// 	context.fillStyle = '#11111177';
+	// 	context.strokeStyle = '#11111177';
+	// 	draw(true, true);
+	// }, 1);
+
+</script>
+</body>
+</html>
