@@ -10,44 +10,112 @@
 <script>
 	const canvas = document.getElementById('canvas');
 	const context = canvas.getContext('2d');
-	function drawPath(offsetX, offsetY, fillStyle, strokeStyle) {
-		context.beginPath();
-		context.moveTo(100 + offsetX, 100 + offsetY);
-		context.lineTo(200 + offsetX, 200 + offsetY);
-		context.arc(100 + offsetX, 50 + offsetY, 50, 0, 2*Math.PI);
-		context.lineTo(100 + offsetX, 50 + offsetY);
-		// context.closePath();
-		context.lineCap = "round";
-		context.lineJoin = "round";
-		context.fillStyle = fillStyle;
-		context.strokeStyle = strokeStyle;
-		context.lineWidth = 10;
-	}
-
 
 	const shapes = [
-		new Shape1(),
-		new Shape1(),
+		new Circle(context, { x0: 200, y0: 100, radius: 25, name: 'circle2', strokeColor: 'red', fillColor: 'orange' }),
+		new Circle(context, { x0: 100, y0: 100, radius: 50, name: 'circle1', strokeColor: 'blue', fillColor: 'cyan' }),
 	];
-	shapes[1].scale(2, -200, 0);
 
+	let selectedShape = null;
 
-	function draw(stroke, fill) {
-		if (stroke) {
-			context.stroke();
-		}
-		if (fill) {
-			context.fill();
-		}
-	}
-
-	canvas.addEventListener('mousemove', (event) => {
+	canvas.addEventListener('click', (event) => {
 		const x = event.offsetX;
 		const y = event.offsetY;
-		const deltaX = event.movementX;
-		const deltaY = event.movementY;
 		for (let i = 0; i !== shapes.length; ++i) {
-			shapes[i].move(deltaX, deltaY);
+			if (shapes[i].isPointInShape(x, y)) {
+				if (selectedShape === shapes[i]) {
+					selectedShape = null;
+				} else {
+					selectedShape = shapes[i];
+				}
+				return;
+			}
+		}
+		selectedShape = null;
+	});
+
+	canvas.addEventListener('wheel', (event) => {
+		if (selectedShape) {
+			selectedShape.scale(1 + event.deltaY/100);
+		}
+	});
+
+	let lastX = null;
+	let lastY = null;
+
+	canvas.addEventListener('mousemove', (event) => {
+		const x = event.clientX;
+		const y = event.clientY;
+		if (typeof lastX === 'number' && typeof lastY === 'number') {
+			if (selectedShape) {
+				const dx = x - lastX;
+				const dy = y - lastY;
+				selectedShape.translate(dx, dy);
+			}
+		}
+		lastX = x;
+		lastY = y;
+	});
+
+	window.addEventListener('keydown', (event) => {
+		console.log('keydown', event.key, event.code);
+		switch (event.key) {
+		case 'Escape':
+			selectedShape = null;
+			event.preventDefault();
+			break;
+		case 'Tab':
+			selectedShape = shapes[(shapes.indexOf(selectedShape) + 1) % shapes.length];
+			event.preventDefault();
+			break;
+		case 'ArrowLeft':
+			if (selectedShape) {
+				selectedShape.translate(-5, 0);
+			}
+			event.preventDefault();
+			break;
+		case 'ArrowRight':
+			if (selectedShape) {
+				selectedShape.translate(5, 0);
+			}
+			event.preventDefault();
+			break;
+		case 'ArrowUp':
+			if (selectedShape) {
+				selectedShape.translate(0, -5);
+			}
+			event.preventDefault();
+			break;
+		case 'ArrowDown':
+			if (selectedShape) {
+				selectedShape.translate(0, 5);
+			}
+			event.preventDefault();
+			break;
+		case 'PageUp':
+			if (selectedShape) {
+				selectedShape.scale(1.1);
+			}
+			event.preventDefault();
+			break;
+		case 'PageDown':
+			if (selectedShape) {
+				selectedShape.scale(1 / 1.1);
+			}
+			event.preventDefault();
+			break;
+		case ']':
+			if (selectedShape) {
+				selectedShape.rotate(5 / 180 * Math.PI);
+			}
+			event.preventDefault();
+			break;
+		case '[':
+			if (selectedShape) {
+				selectedShape.rotate(-5 / 180 * Math.PI);
+			}
+			event.preventDefault();
+			break;
 		}
 	});
 
@@ -55,16 +123,9 @@
 		context.clearRect(0, 0, canvas.width, canvas.height);
 		for (let i = 0; i !== shapes.length; ++i) {
 			const shape = shapes[i];
-			shape.draw(context);
+			shape.draw(shape === selectedShape);
 		}
 	}, 16);
-
-	// setTimeout(() => {
-	// 	drawPath();
-	// 	context.fillStyle = '#11111177';
-	// 	context.strokeStyle = '#11111177';
-	// 	draw(true, true);
-	// }, 1);
 
 </script>
 </body>

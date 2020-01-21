@@ -1,203 +1,187 @@
-class BaseError extends Error {
-	constructor(message, name) {
-		super(message);
-		this.name = name || this.constructor.name;
-	}
-}
-
-class NotImplemented extends BaseError {
-	constructor(what) {
-		super(what + ' is not fully implemented');
-		this.what = what;
-	}
-}
-
-const PropertiesMeta = Symbol('properties');
+/**
+ * Лінійне перетворення простору:
+ *  точка простору - геометрична точка, задана координатами в декартовій системі координат (x, y)
+ *  Перетворення простору - застосування функції
+ *    f(x, y) => (x1, y1) на кожні точці простору (x, y)
+ *  Лінійне перетворення простору - перетворення простору, для якого
+ *     (x)      (a11*x + a12*y + a13)
+ *    f( )  =>
+ *     (y)      (a21*x + a22*y + a23)
+ *  Лінійне перетворення задається матрицею:
+ *  (a11 a12 a13)
+ *  (a21 a22 a23)
+ * Елементарні лінійні перетворення:
+ *  - зсув (dx, dy)
+ *    матриця:
+ *         (1 0 dx)
+ *         (0 1 dy)
+ *    f(x, y) = (x + dx, y + dy)
+ *  - маштабування (sx, sy)
+ *    матриця:
+ *         (sx 0 0)
+ *         (0 sy 0)
+ *    f(x, y) = (x * sx, y*sy)
+ *  - маштабування (sx, sy) відносно точки (x0, y0)
+ *    декомпозиція:
+ *      1. зсув координат таким чином, щоб відображення точки (x0, y0) => (0, 0)
+ *           (1 0 -x0)
+ *           (0 1 -y0)
+ *      2. матриця:
+ *           (sx 0 0)
+ *           (0 sy 0)
+ *      3. зсув зворотній до кроку 1:
+ *           (1 0 x0)
+ *           (0 1 y0)
+ *  - поворот на кут alpha проти часової стрілки відносно початку координат
+ *      матриця
+ *          (cos(alpha) sin(alpha)  0)
+ *          (-sin(alpha) cos(alpha) 0)
+ *      f(x, y) = (x*cos(alpha) + y*sin(alpha), x*sin(alpha) - y*cos(alpha))
+ */
 
 class AShape {
-	constructor(name) {
+	constructor(context, props) {
 		if (this.constructor === AShape) {
-			throw new NotImplemented('class ' + this.constructor.name);
+			throw new Error('Can not create abstract class AShape');
 		}
-		this.name = name;
-	}
-
-	get [PropertiesMeta]() {
-		const propsMeta = {};
-		for (let proto = Object.getPrototypeOf(this); proto; proto = Object.getPrototypeOf(proto)) {
-			const descriptors = Object.getOwnPropertyDescriptors(proto);
-			for (let name in descriptors) {
-				if (typeof name === 'symbol') {
-					continue;
-				}
-				if (propsMeta.hasOwnProperty(name)) {
-					continue;
-				}
-				const desc = descriptors[name];
-				if (typeof desc.value === 'function') {
-					continue;
-				}
-				if (typeof desc.get === 'function' || typeof desc.set === 'function') {
-					propsMeta[name] = {
-						get: typeof desc.get === 'function',
-						set: typeof desc.set === 'function',
-					};
-				} else {
-					propsMeta[name] = {
-						get: true,
-						set: desc.writable,
-					};
-				}
-			}
-			return propsMeta;
-		}
+		this.context = context;
+		this.name = props.name;
+		this.strokeColor = props.strokeColor;
+		this.fillColor = props.fillColor;
 	}
 
 	get area() {
-		throw new NotImplemented(this.constructor.name + '.draw');
+		throw new Error('Not implemented');
 	}
 
 	get perimeter() {
-		throw new NotImplemented(this.constructor.name + '.draw');
+		throw new Error('Not implemented');
 	}
 
-	draw(context) {
-		throw new NotImplemented(this.constructor.name + '.draw');
+	transform(a11, a12, a13, a21, a22, a23) {
+		throw new Error('Not implemented');
 	}
 
-	isPointInShape(context, x, y) {
-		throw new NotImplemented(this.constructor.name + '.isPointInShape');
+	scale(s, x0 = 0, y0 = 0) {
+		if (!(s !== 0 && Number.isFinite(s))) {
+			throw new Error('Illegal usage');
+		}
+		if (!(x0 === 0 && y0 === 0)) {
+			this.translate(-x0, -y0)
+		}
+		this.transform(s, 0, 0, 0, s, 0);
+		if (!(x0 === 0 && y0 === 0)) {
+			this.translate(x0, y0)
+		}
 	}
 
-	isPointInStroke(context, x, y) {
-		throw new NotImplemented(this.constructor.name + '.isPointInStroke');
+	rotate(alpha, x0 = 0, y0 = 0) {
+		if (!Number.isFinite(alpha)) {
+			throw new Error('Illegal usage');
+		}
+		const ca = Math.cos(alpha);
+		const sa = Math.sin(alpha);
+		if (!(x0 === 0 && y0 === 0)) {
+			this.translate(-x0, -y0)
+		}
+		this.transform(ca, sa, 0, -sa, ca, 0);
+		if (!(x0 === 0 && y0 === 0)) {
+			this.translate(x0, y0)
+		}
 	}
 
-	move(deltaX, deltaY) {
-		throw new NotImplemented(this.constructor.name + '.move');
+	translate(dx, dy) {
+		if (!(Number.isFinite(dx) && Number.isFinite(dy))) {
+			throw new Error('Illegal usage');
+		}
+		return this.transform(1, 0, dx, 0, 1, dy);
 	}
 
-	scale(factor, centerX, centerY) {
-		throw new NotImplemented(this.constructor.name + '.scale');
+	isPointInShape(x, y) {
+		throw new Error('Not implemented');
 	}
 
-}
-
-class Shape1 extends AShape {
-	constructor() {
-		super();
-		this.radius = 50;
-		this.centerX = 0;
-		this.centerY = 0;
-		/// radius = 50
-		/// centerX = 0
-		/// centerY = 0
+	_draw() {
+		throw new Error('Not implemented');
 	}
 
-	get area() {
-		return Math.PI * Math.pow(this.radius, 2);
-	}
-
-	get perimeter() {
-		return 2 * Math.PI * this.radius;
-	}
-
-	draw(context) {
+	draw(isSelected) {
+		const context = this.context;
 		context.beginPath();
-		context.moveTo(this.centerX, this.centerY);
-		context.arc(this.centerX, this.centerY, this.radius, 0, 2 * Math.PI);
-		context.fill();
-	}
-
-	isPointInShape(context, x, y) {
-		return Math.pow(x - this.centerX, 2) + Math.pow(y - this.centerY, 2) < Math.pow(this.radius, 2);
-	}
-
-	isPointInStroke(context, x, y) {
-		return Math.pow(x - this.centerX, 2) + Math.pow(y - this.centerY, 2) === Math.pow(this.radius, 2);
-	}
-
-	move(deltaX, deltaY) {
-		this.centerX += deltaX;
-		this.centerY += deltaY;
-	}
-
-	scale(factor, centerX, centerY) {
-		this.move(-centerX, -centerY);
-		this.radius *= factor;
-		this.centerX *= factor;
-		this.centerY *= factor;
-		this.move(centerX, centerY);
+		this._draw();
+		context.strokeStyle = this.strokeColor;
+		context.fillStyle = this.fillColor;
+		if (isSelected) {
+			context.shadowColor = 'rgba(0, 0, 0, 0.75)';
+			context.shadowOffsetX = 0;
+			context.shadowOffsetY = 0;
+			context.shadowBlur = 10;
+		} else {
+			context.shadowColor = 'transparent';
+			context.shadowOffsetX = 0;
+			context.shadowOffsetY = 0;
+			context.shadowBlur = 0;
+		}
+		this.context.fill();
+		this.context.stroke();
 	}
 }
 
-// const shape = new Shape1();
-// shape.scale(4, 100, 0);
-// console.log(shape.centerX, shape.centerY);
-// console.log(shape.radius);
 
+/**
+ * {
+ *   radius: number
+ *   x0: number,
+ *   y0: number
+ * }
+ */
+class Circle extends AShape {
+	constructor(context, props) {
+		super(context, props);
+		if (!(Number.isFinite(props.x0) && Number.isFinite(props.y0) && Number.isFinite(props.radius))) {
+			throw new Error('Illegal usage');
+		}
+		this.x0 = props.x0;
+		this.y0 = props.y0;
+		this.radius = props.radius;
+	}
 
-//
-//
-// class Point {
-// 	constructor(x, y) {
-// 		this.x = x;
-// 		this.y = y;
-// 	}
-// }
-//
-// class Triangle extends AShape {
-// 	constructor(name, points) {
-// 		super(name);
-// 		this.pointA = points[0];
-// 		this.pointB = points[1];
-// 		this.pointC = points[2];
-// 	}
-//
-// 	get pointA() {
-// 		return this._pointA;
-// 	}
-//
-// 	get pointB() {
-// 		return this._pointB;
-// 	}
-//
-// 	get pointC() {
-// 		return this._pointC;
-// 	}
-//
-// 	set pointA(value) {
-// 		if (!(value instanceof Point)) {
-// 			throw new TypeError('value must be instance of Point');
-// 		}
-// 		this._pointA = value;
-// 	}
-//
-// 	set pointB(value) {
-// 		if (!(value instanceof Point)) {
-// 			throw new TypeError('value must be instance of Point');
-// 		}
-// 		this._pointB = value;
-// 	}
-//
-// 	set pointC(value) {
-// 		if (!(value instanceof Point)) {
-// 			throw new TypeError('value must be instance of Point');
-// 		}
-// 		this._pointC = value;
-// 	}
-//
-// 	get area() {
-// 		/// (x1, y1), (x2, y2), (x3, y3)
-//
-// 		// v1: (x2-x1, y2-y1)
-// 		// v2: (x3-x1, y3-y1)
-//
-// 		// v1 * v2 = (x2-x1)*(y3-y1) - (x3-x1)*(y2-y1)
-// 		// Math.abs((x2-x1)*(y3-y1) - (x3-x1)*(y2-y1)) / 2
-// 	}
-// }
-//
-// class Class {
-//
-// }
+	get area() {
+		return Math.PI * (this.radius * this.radius);
+	}
+
+	get perimeter() {
+		return Math.PI * this.radius * 2;
+	}
+
+	transform(
+		a11, a12, a13,
+		a21, a22, a23
+	) {
+		const x0 = this.x0;
+		const y0 = this.y0;
+		const r = this.radius;
+		const x1 = x0 + r;
+		const y1 = y0;
+		const x0_new = a11*x0 + a12*y0 + a13;
+		const y0_new = a21*x0 + a22*y0 + a23;
+		const x1_new = a11*x1 + a12*y1 + a13;
+		const y1_new = a21*x1 + a22*y1 + a23;
+		this.x0 = x0_new;
+		this.y0 = y0_new;
+		this.radius = Math.hypot(x1_new - x0_new, y1_new - y0_new);
+	}
+
+	isPointInShape(x, y) {
+		// (x-x0)^2 + (y-y0)^2 <= r^2
+		const x0 = this.x0;
+		const y0 = this.y0;
+		const r = this.radius;
+		return Math.pow(x-x0, 2) + Math.pow(y-y0, 2) <= Math.pow(r, 2);
+	}
+
+	_draw() {
+		this.context.moveTo(this.x0 + this.radius, this.y0);
+		this.context.arc(this.x0, this.y0, this.radius, 0, 2 * Math.PI);
+	}
+}
