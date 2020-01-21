@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+	<canvas style="margin: 0; padding: 0" width="400" height="400" id="canvas" />
+	<script>
+		const canvas = document.getElementById('canvas');
+		const context = canvas.getContext('2d');
+
+		const shapes = [
+			(context) => {
+				context.strokeStyle = 'blue';
+				context.fillStyle = 'red';
+				context.lineWidth = 10;
+				context.moveTo(200, 200);
+				context.lineTo(300, 300);
+				context.lineTo(300, 200);
+			},
+			(context) => {
+				context.strokeStyle = 'green';
+				context.fillStyle = 'blue';
+				context.lineWidth = 5;
+				context.arc(50, 50, 100, 0, 2 * Math.PI);
+			},
+			(context) => {
+				context.strokeStyle = 'black';
+				context.fillStyle = 'gray';
+				context.lineWidth = 5;
+				context.moveTo(100, 50);
+				context.lineTo(200, 50);
+				context.lineTo(200, 100);
+				context.lineTo(100, 100);
+			},
+		];
+
+
+		const draw = (event) => {
+			context.clearRect(0, 0, canvas.width, canvas.height);
+			let mouseInShape = {
+				shape: null,
+				fill: true,
+				stroke: true,
+			};
+
+			if (event) {
+				for (let i = shapes.length - 1; i >= 0; --i) {
+					const shape = shapes[i];
+					context.beginPath();
+					shape(context);
+					context.closePath();
+					const x = event ? event.offsetX  : undefined;
+					const y = event ? event.offsetY  : undefined;
+					if (typeof x === 'number' && typeof y === 'number' && context.isPointInStroke(x, y)) {
+						mouseInShape = {
+							shape: shape,
+							stroke: true,
+							fill: false,
+						};
+						break;
+					} else if (typeof x === 'number' && typeof y === 'number' && context.isPointInPath(x, y)) {
+						mouseInShape = {
+							shape: shape,
+							stroke: false,
+							fill: true,
+						};
+						break;
+					}
+				}
+			}
+
+			for (let i = 0; i !== shapes.length; ++i) {
+				const shape = shapes[i];
+				context.beginPath();
+				shape(context);
+				context.closePath();
+				if (mouseInShape.shape === shape) {
+					if (mouseInShape.fill) {
+						context.fill();
+					}
+					if (mouseInShape.stroke) {
+						context.stroke();
+					}
+				} else {
+					context.fill();
+					context.stroke();
+				}
+			}
+		};
+
+		canvas.addEventListener('mousemove', draw);
+		draw();
+		// context.stroke();
+		// context.fill();
+
+		// setInterval(draw, 16);
+	</script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<!DOCTYPE html>
+	<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<title>Title</title>
+	</head>
+<body>
+<canvas style="margin: 0; padding: 0" width="400" height="400" id="canvas"></canvas>
+<script src="shapes2.js"></script>
+<script>
+	const canvas = document.getElementById('canvas');
+	const context = canvas.getContext('2d');
+
+	const shapes = [
+		new Line(context, {
+			a: {
+				x: 3,
+				y: 8
+			},
+			b: {
+				x: 100,
+				y: 200,
+			},
+			strokeStyle: 'blue',
+			fillStyle: 'transparent',
+			name: 'line1',
+		}),
+		new Line(context, {
+			a: {
+				x: 0,
+				y: 0
+			},
+			b: {
+				x: 300,
+				y: 150,
+			},
+			strokeStyle: 'red',
+			fillStyle: 'transparent',
+			name: 'line2',
+		}),
+		new Line(context, {
+			a: {
+				x: 200,
+				y: 0
+			},
+			b: {
+				x: 400,
+				y: 100,
+			},
+			strokeStyle: 'black',
+			fillStyle: 'transparent',
+			name: 'line3',
+		})
+	];
+	let selectedShape = null;
+	let lastX = null;
+	let lastY = null;
+
+	canvas.addEventListener('mousemove', (event) => {
+		const x = event.offsetX;
+		const y = event.offsetY;
+		if (!(lastX === null || lastY === null)) {
+			if (selectedShape) {
+				const dx = x - lastX;
+				const dy = y - lastY;
+				selectedShape.translate(dx, dy);
+			}
+		}
+		lastX = x;
+		lastY = y;
+	});
+
+	canvas.addEventListener('mousedown', (event) => {
+		const x = event.offsetX;
+		const y = event.offsetY;
+		// alert(`x=${x} y=${y}`);
+		for (let i = shapes.length - 1; i >= 0; --i) {
+			const shape = shapes[i];
+			if (shape.isPointInShape(x, y)) {
+				console.log('Selected shape', shape.name);
+				selectedShape = shape;
+				return;
+			}
+		}
+		selectedShape = null;
+	});
+
+	canvas.addEventListener('mouseup', (event) => {
+		selectedShape = null;
+	});
+
+	canvas.addEventListener('wheel', (event) => {
+		const ONE = 53;
+		const alpha = event.deltaY / ONE * Math.PI / 180;
+		const x0 = event.offsetX;
+		const y0 = event.offsetY;
+		if (selectedShape) {
+			selectedShape.rotate(alpha, x0, y0);
+		}
+		// console.log(event.deltaY);
+	});
+
+	window.addEventListener('keydown', (event) => {
+		switch (event.key) {
+		case ']':
+			if (selectedShape && lastX !== null && lastY !== null) {
+				selectedShape.scale(1.1, lastX, lastY);
+			}
+			event.preventDefault();
+			break;
+		case '[':
+			if (selectedShape && lastX !== null && lastY !== null) {
+				selectedShape.scale(1 / 1.1, lastX, lastY);
+			}
+			event.preventDefault();
+			break;
+		}
+	});
+
+	setInterval(() => {
+		context.clearRect(0, 0, canvas.width, canvas.height);
+		for (let i = 0; i !== shapes.length; ++i) {
+			const shape = shapes[i];
+			shape.draw(shape === selectedShape);
+		}
+	}, 16);
+
+	// setTimeout(() => {
+	// 	drawPath();
+	// 	context.fillStyle = '#11111177';
+	// 	context.strokeStyle = '#11111177';
+	// 	draw(true, true);
+	// }, 1);
+
+</script>
+</body>
+</html>
