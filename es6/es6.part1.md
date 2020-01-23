@@ -15,7 +15,7 @@ var x = 0;                                  // Оголошуємо змінну
     }
 })();
 console.log('global x = %o', x);            // Використовуємо змінну `x` на рівні модуля
-``` 
+```
 
 **Результат виконання:**
 ```text
@@ -53,7 +53,7 @@ global x = 0
 ```ecmascript 6
 const A = 2;            // Оголошення "константи"
 A = 3;                  // <== TypeError: Assignment to constant variable.
-``` 
+```
 
 **Результат виконання:**
 ```text
@@ -76,7 +76,7 @@ TypeError: Assignment to constant variable.
 **Приклад 2:**
 ```ecmascript 6
 const A;                // <== SyntaxError: Missing initializer in const declaration
-``` 
+```
 
 **Результат виконання:**
 ```text
@@ -103,7 +103,7 @@ SyntaxError: Missing initializer in const declaration
  - *`[value]`* - поточне значення ітератора.
 Об'єкт, який повертається методом **`next`** називають поточним станом ітератора.
 
-**Ітерабельним** називається об'єкт, в якого доступний нуль-арний (той, що не вимагає жодного аргумента) метод **`[Symbol.iterator]`**, що повертає **ітератор**. 
+**Ітерабельним** називається об'єкт, в якого доступний нуль-арний (той, що не вимагає жодного аргумента) метод **`[Symbol.iterator]`**, що повертає **ітератор**.
 
 **Генератором** називається функція, результат якої є одночасно **ітератором** та **ітерабельним**.
 
@@ -264,7 +264,7 @@ function range(start, stop, step) {                     // Генератор
 
 (function (){
     var iterable = range(0, 10, 1.5);
-    var iterator = iterable[Symbol.iterator];
+    var iterator = iterable[Symbol.iterator]();
     for (var state = iterator.next(), value = state.value; !state.done; state = iterator.next(), value = state.value) {
         console.log(value);
     }
@@ -425,7 +425,7 @@ OK: (new Set([1, 2, 3, 4, 5, 2, 3, 5])).add(0).add(1) ===> Set { 1, 2, 3, 4, 5, 
 
 ### Set.prototype.delete()
 Метод `Set.prototype.delete(value)` видаляє значення `value` з множини. [MDN: Set.prototype.delete()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set/delete)
-Метод повертає `true`, якщо значення `value` було присутнє у множині та `false`, - якщо ні. 
+Метод повертає `true`, якщо значення `value` було присутнє у множині та `false`, - якщо ні.
 
 **Приклад:**
 ```ecmascript 6
@@ -585,7 +585,7 @@ OK: (new Map([[true, true], [false, false]])).set(true, { value: "true" }).set(f
 
 ### Map.prototype.delete()
 Метод `Map.prototype.delete(key)` видаляє зв'язок для ключа `key` з відображення. [MDN: Map.prototype.delete()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map/delete)
-Метод повертає `true`, якщо ключ `key` був присутній у множині та `false`, - якщо ні. 
+Метод повертає `true`, якщо ключ `key` був присутній у множині та `false`, - якщо ні.
 
 **Приклад:**
 ```ecmascript 6
