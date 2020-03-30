@@ -737,3 +737,4 @@ for (let value of (new Map([[0, { value: "hello" }], [1, { value: "world" }]])).
 { value: 'world' }
 ```
 
+xsxsaxas
